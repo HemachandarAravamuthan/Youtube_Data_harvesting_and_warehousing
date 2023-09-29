@@ -5,15 +5,15 @@ YouTube Data Harvesting and Warehousing is a project aimed at developing a user-
 
 Table of Contents
 
-  Key Technologies and Skills
-  Installation
-Features
-Retrieving data from the YouTube API
-Storing data in MongoDB
-Migrating data to a SQL data warehouse
-Data Analysis
-Contributing
-Contact
+  Key Technologies and Skills\
+  Installation\
+  Features\
+  Retrieving data from the YouTube API
+  Storing data in MongoDB
+  Migrating data to a SQL data warehouse
+  Data Analysis
+  Contributing
+  Contact
 Key Technologies and Skills
 
 Python scripting
