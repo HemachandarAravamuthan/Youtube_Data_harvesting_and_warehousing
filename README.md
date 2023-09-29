@@ -13,7 +13,7 @@ Table of Contents
   Migrating data to a SQL data warehouse\
   Data Analysis\
   Contributing\
-  Contact\
+  Contact
   
 Key Technologies and Skills
 
@@ -22,14 +22,14 @@ Data Collection\
 API integration\
 Streamlit\
 Data Management using MongoDB (Atlas) and SQL\
-Installation\
+Installation
 
 To run this project, you need to install the following packages:
 
 pip install google-api-python-client\
 pip install pymongo\
 pip install pandas\
-pip install streamlit\
+pip install streamlit
 
 Workflow
 
@@ -38,7 +38,7 @@ Store the retrieved data in a MongoDB database.\
 Migrate the data to a SQL data warehouse.\
 Analyze data using Streamlit.\
 Perform queries on the SQL data warehouse.\
-Gain insights into channel performance, video metrics, and more.\
+Gain insights into channel performance, video metrics, and more.
 
 Retrieving data from the YouTube API
 
@@ -54,13 +54,13 @@ The application allows users to migrate data from MongoDB to a SQL data warehous
 
 Data Analysis
 
-The project provides comprehensive data analysis capabilities using  MySQL queries. 
+The project provides comprehensive data analysis capabilities using  MySQL queries.\
 
-Channel Analysis: Channel analysis includes insights on playlists, videos, subscribers, views, likes, comments, and durations. Gain a deep understanding of the channel's performance and audience engagement and summaries.
+Channel Analysis: Channel analysis includes insights on playlists, videos, subscribers, views, likes, comments, and durations. Gain a deep understanding of the channel's performance and audience engagement and summaries.\
 
-Video Analysis: Video analysis focuses on views, likes, comments, and durations, enabling both an overall channel and specific channel perspectives. Leverage visual representations and metrics to extract valuable insights from individual videos.
+Video Analysis: Video analysis focuses on views, likes, comments, and durations, enabling both an overall channel and specific channel perspectives. Leverage visual representations and metrics to extract valuable insights from individual videos.\
 
-The Streamlit app provides an intuitive interface to interact with the charts and explore the data visually. Users can customize the visualizations, filter data, and zoom in or out to focus on specific aspects of the analysis.
+The Streamlit app provides an intuitive interface to interact with the charts and explore the data visually. Users can customize the visualizations, filter data, and zoom in or out to focus on specific aspects of the analysis.\
 
 Contributing
 
