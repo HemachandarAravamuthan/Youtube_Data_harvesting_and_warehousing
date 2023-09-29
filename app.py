@@ -1,29 +1,28 @@
+#importing packages needed
 import pymongo
 import pandas as pd
 import streamlit as st
 import mysql.connector
 from googleapiclient.discovery import build
 
-from pymongo.mongo_client import MongoClient
-from pymongo.server_api import ServerApi
-
+#Setting connection to the MongoDB atlas
 client = pymongo.MongoClient("mongodb+srv://Hemachandar:hema1234@cluster0.8rfch9i.mongodb.net/?retryWrites=true&w=majority")
 db = client.Youtube_Data
 
+#Setting connection to SQL server
 mydb = mysql.connector.connect(
   host="localhost",
   user="root",
   password="",
-  database='youtube_data'
-  
+  database='youtube_project'  
 )
-
 mycursor = mydb.cursor(buffered=True)
 
-
+#Youtube API key
 api_key = 'AIzaSyBGy_dk6_7Uwa1aZxmQuyn2lZc4RxeDJ4M'
 youtube = build('youtube', 'v3', developerKey=api_key)
 
+#function to get channel detail from Google API
 def get_channel_stats(channel_id):
     request = youtube.channels().list(
         part='snippet,contentDetails,statistics',
@@ -40,7 +39,7 @@ def get_channel_stats(channel_id):
 
     return data
 
-
+#function to get video_ids from Google API
 def get_channel_videos(channel_id):
     video_ids = []
     # get Uploads playlist id
@@ -65,11 +64,13 @@ def get_channel_videos(channel_id):
             break
     return video_ids
 
+#function to convert to make time delta into mins and sec
 def duration_conversion(t):
       a = pd.Timedelta(t)
       b = str(a).split()[-1]
       return b
 
+#function to get video detail from Google API
 def get_video_detail(video_id):
     video_data=[]
     request = youtube.videos().list(
@@ -94,6 +95,7 @@ def get_video_detail(video_id):
         video_data.append(video_details)
     return (video_data)
 
+#function to get comments detail from Google API
 def get_comments_details(v_id):
     comment_data = []
     try:
@@ -120,6 +122,7 @@ def get_comments_details(v_id):
         pass
     return comment_data
 
+#function to extract the data from youtube API and store it in MongoDB Atlas
 def extract_and_upload(id):
         records1=db.channel
         channel_detail=get_channel_stats(id)
@@ -138,6 +141,7 @@ def extract_and_upload(id):
               records3=db.comment
               records3.insert_many(comment_detail)
 
+#function to create tables in SQL to migrate the data from MongoDB
 def sql_create_tables():
     mycursor.execute("CREATE TABLE if not exists channel(\
                                         channel_id 			varchar(255) primary key,\
@@ -173,6 +177,7 @@ def sql_create_tables():
 
     mydb.commit()
 
+#function to insert values in channel table from MongoDB
 def insert_into_channels(name):
                     records = db.channel
                     query = """INSERT INTO channel VALUES(%s,%s,%s,%s,%s,%s,%s)"""
@@ -181,6 +186,7 @@ def insert_into_channels(name):
                         mycursor.execute(query,tuple(i.values()))
                     mydb.commit()
 
+#function to insert values in video table from MongoDB
 def insert_into_videos(name):
             records1 = db.video
             query1 = """INSERT INTO video VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
@@ -190,6 +196,7 @@ def insert_into_videos(name):
                 mycursor.execute(query1, tuple(values))
                 mydb.commit()
 
+#function to insert values in comments table from MongoDB
 def insert_into_comments(name):
             records1 = db.video
             records2 = db.comment
@@ -200,14 +207,16 @@ def insert_into_comments(name):
                     mycursor.execute(query2,tuple(i.values()))
                     mydb.commit()
 
+#function to get channel name from MongoDB to create dropdown to select to migrate to SQL
 def channel_name():   
     ch_name = []
     for i in db.channel.find():
         ch_name.append(i['Channel_name'])
     return ch_name
 
+#streamlit page setup
 st.title('YouTube Data Harvesting and Warehousing')
-st.header('Work flow')
+st.subheader('Work flow')
 st.code('1 - Retrieving data from the YouTube API')
 st.code('2 - Store data to MongoDB')
 st.code('3 - Migrating data to a SQL data warehouse')
@@ -217,6 +226,7 @@ list_options = ['Select one', 'Retrieving data from the YouTube API and dtore to
                 'Migrating data to a SQL database', 'Data Analysis', 'Exit']
 option = st.selectbox('', list_options)
 
+#getting channel_id by user input and extracting and storing data
 if option=='Retrieving data from the YouTube API and dtore to mongoDB':
      if st.button('Channel_id ?'):
           st.write("View channel home page - Right click on the screen - select 'view page source' - search'?channel_id'")
@@ -225,6 +235,7 @@ if option=='Retrieving data from the YouTube API and dtore to mongoDB':
         extract_and_upload(channel_id)
         st.success('Successfully extracted and stored in MongoDB')
 
+#Migrating to SQL server
 elif option=='Migrating data to a SQL database':
      sql_create_tables()
      st.markdown("#   ")
@@ -237,6 +248,7 @@ elif option=='Migrating data to a SQL database':
                 insert_into_comments(name)
                 st.success("Successfully migrated to SQL")
 
+#Answering questions
 elif option=='Data Analysis':
     question = st.selectbox('Questions',
     ['1. What are the names of all the videos and their corresponding channels?',
