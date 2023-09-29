@@ -8,7 +8,7 @@ Table of Contents
   Key Technologies and Skills\
   Installation\
   Features\
-  Retrieving data from the YouTube API\
+  Retrieving data from the YouTube API \
   Storing data in MongoDB\
   Migrating data to a SQL data warehouse\
   Data Analysis\
