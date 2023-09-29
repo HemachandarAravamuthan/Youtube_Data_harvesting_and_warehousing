@@ -8,35 +8,37 @@ Table of Contents
   Key Technologies and Skills\
   Installation\
   Features\
-  Retrieving data from the YouTube API
-  Storing data in MongoDB
-  Migrating data to a SQL data warehouse
-  Data Analysis
-  Contributing
-  Contact
+  Retrieving data from the YouTube API\
+  Storing data in MongoDB\
+  Migrating data to a SQL data warehouse\
+  Data Analysis\
+  Contributing\
+  Contact\
+  
 Key Technologies and Skills
 
-Python scripting
-Data Collection
-API integration
-Streamlit
-Data Management using MongoDB (Atlas) and SQL
-Installation
+Python scripting\
+Data Collection\
+API integration\
+Streamlit\
+Data Management using MongoDB (Atlas) and SQL\
+Installation\
 
 To run this project, you need to install the following packages:
 
-pip install google-api-python-client
-pip install pymongo
-pip install pandas
-pip install streamlit
+pip install google-api-python-client\
+pip install pymongo\
+pip install pandas\
+pip install streamlit\
 
 Workflow
-Retrieve data from the YouTube API, including channel information, videos, and comments.
-Store the retrieved data in a MongoDB database.
-Migrate the data to a SQL data warehouse.
-Analyze data using Streamlit.
-Perform queries on the SQL data warehouse.
-Gain insights into channel performance, video metrics, and more.
+
+Retrieve data from the YouTube API, including channel information, videos, and comments.\
+Store the retrieved data in a MongoDB database.\
+Migrate the data to a SQL data warehouse.\
+Analyze data using Streamlit.\
+Perform queries on the SQL data warehouse.\
+Gain insights into channel performance, video metrics, and more.\
 
 Retrieving data from the YouTube API
 
