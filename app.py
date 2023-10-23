@@ -1,28 +1,30 @@
-#importing packages needed
+#importing packages
 import pymongo
 import pandas as pd
 import streamlit as st
 import mysql.connector
 from googleapiclient.discovery import build
 
-#Setting connection to the MongoDB atlas
+#mongoDb setup
 client = pymongo.MongoClient("mongodb+srv://Hemachandar:hema1234@cluster0.8rfch9i.mongodb.net/?retryWrites=true&w=majority")
 db = client.Youtube_Data
 
-#Setting connection to SQL server
+#SQL server connection
 mydb = mysql.connector.connect(
   host="localhost",
   user="root",
   password="",
-  database='youtube_project'  
+  database='youtube_data'
+  
 )
+
 mycursor = mydb.cursor(buffered=True)
 
-#Youtube API key
+#api key connection
 api_key = 'AIzaSyBGy_dk6_7Uwa1aZxmQuyn2lZc4RxeDJ4M'
 youtube = build('youtube', 'v3', developerKey=api_key)
 
-#function to get channel detail from Google API
+#function to get channel stats
 def get_channel_stats(channel_id):
     request = youtube.channels().list(
         part='snippet,contentDetails,statistics',
@@ -39,7 +41,7 @@ def get_channel_stats(channel_id):
 
     return data
 
-#function to get video_ids from Google API
+#function to get channel video ids
 def get_channel_videos(channel_id):
     video_ids = []
     # get Uploads playlist id
@@ -64,13 +66,13 @@ def get_channel_videos(channel_id):
             break
     return video_ids
 
-#function to convert to make time delta into mins and sec
+#function to convert delta time to mins
 def duration_conversion(t):
       a = pd.Timedelta(t)
       b = str(a).split()[-1]
       return b
 
-#function to get video detail from Google API
+#function to get video stats
 def get_video_detail(video_id):
     video_data=[]
     request = youtube.videos().list(
@@ -95,7 +97,7 @@ def get_video_detail(video_id):
         video_data.append(video_details)
     return (video_data)
 
-#function to get comments detail from Google API
+#function to get comment details
 def get_comments_details(v_id):
     comment_data = []
     try:
@@ -122,7 +124,7 @@ def get_comments_details(v_id):
         pass
     return comment_data
 
-#function to extract the data from youtube API and store it in MongoDB Atlas
+#function to exctract data from youtubeapi and upload it to mongoDB
 def extract_and_upload(id):
         records1=db.channel
         channel_detail=get_channel_stats(id)
@@ -141,7 +143,7 @@ def extract_and_upload(id):
               records3=db.comment
               records3.insert_many(comment_detail)
 
-#function to create tables in SQL to migrate the data from MongoDB
+#function to create table in sql
 def sql_create_tables():
     mycursor.execute("CREATE TABLE if not exists channel(\
                                         channel_id 			varchar(255) primary key,\
@@ -177,7 +179,7 @@ def sql_create_tables():
 
     mydb.commit()
 
-#function to insert values in channel table from MongoDB
+#function to insert values into channel table
 def insert_into_channels(name):
                     records = db.channel
                     query = """INSERT INTO channel VALUES(%s,%s,%s,%s,%s,%s,%s)"""
@@ -186,17 +188,16 @@ def insert_into_channels(name):
                         mycursor.execute(query,tuple(i.values()))
                     mydb.commit()
 
-#function to insert values in video table from MongoDB
+#function to insert values into video table
 def insert_into_videos(name):
             records1 = db.video
             query1 = """INSERT INTO video VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
 
             for i in records1.find({"Channel_name" : name},{'_id' : 0}):
-                values = [str(val).replace("'", "''").replace('"', '""') if isinstance(val, str) else val for val in i.values()]
-                mycursor.execute(query1, tuple(values))
+                mycursor.execute(query1, tuple(i.values()))
                 mydb.commit()
 
-#function to insert values in comments table from MongoDB
+#function to insert values into comment table
 def insert_into_comments(name):
             records1 = db.video
             records2 = db.comment
@@ -207,26 +208,27 @@ def insert_into_comments(name):
                     mycursor.execute(query2,tuple(i.values()))
                     mydb.commit()
 
-#function to get channel name from MongoDB to create dropdown to select to migrate to SQL
+#function to get channel name from mongoDB
 def channel_name():   
     ch_name = []
     for i in db.channel.find():
         ch_name.append(i['Channel_name'])
     return ch_name
 
-#streamlit page setup
+#streamlit Page setup
 st.title('YouTube Data Harvesting and Warehousing')
-st.subheader('Work flow')
-st.code('1 - Retrieving data from the YouTube API')
-st.code('2 - Store data to MongoDB')
-st.code('3 - Migrating data to a SQL data warehouse')
-st.code('4 - Data Analysis')
-st.code('6 - Exit')
-list_options = ['Select one', 'Retrieving data from the YouTube API and dtore to mongoDB',
-                'Migrating data to a SQL database', 'Data Analysis', 'Exit']
-option = st.selectbox('', list_options)
+st.header('Work flow')
+st.write('''Retrieving data from the YouTube API --> 
+Store data to MongoDB --> 
+Migrating data to a SQL data warehouse --> 
+Data Analysis''')
 
-#getting channel_id by user input and extracting and storing data
+#dropdown to select operation
+list_options = ['Retrieving data from the YouTube API and dtore to mongoDB',
+                'Migrating data to a SQL database', 'Data Analysis', 'Exit']
+option = st.selectbox('Select One', list_options)
+
+#Retrieving data from the YouTube API and dtore to mongoDB
 if option=='Retrieving data from the YouTube API and dtore to mongoDB':
      if st.button('Channel_id ?'):
           st.write("View channel home page - Right click on the screen - select 'view page source' - search'?channel_id'")
@@ -235,7 +237,7 @@ if option=='Retrieving data from the YouTube API and dtore to mongoDB':
         extract_and_upload(channel_id)
         st.success('Successfully extracted and stored in MongoDB')
 
-#Migrating to SQL server
+#Migrating data to a SQL database
 elif option=='Migrating data to a SQL database':
      sql_create_tables()
      st.markdown("#   ")
@@ -243,13 +245,17 @@ elif option=='Migrating data to a SQL database':
      ch_names = channel_name()
      name = st.selectbox("Select channel",options= ch_names)
      if st.button("Submit"):
-                insert_into_channels(name)
-                insert_into_videos(name)
-                insert_into_comments(name)
-                st.success("Successfully migrated to SQL")
+                try:
+                    insert_into_channels(name)
+                    insert_into_videos(name)
+                    insert_into_comments(name)
+                    st.success("Successfully migrated to SQL")
+                except:
+                     st.error('Data already Migrated')
 
-#Answering questions
+#Data Analysis
 elif option=='Data Analysis':
+    #dropdown to select questions
     question = st.selectbox('Questions',
     ['1. What are the names of all the videos and their corresponding channels?',
     '2. Which channels have the most number of videos, and how many videos do they have?',
@@ -266,16 +272,16 @@ elif option=='Data Analysis':
                             FROM video
                             ORDER BY channel_name""")
         df = pd.DataFrame(mycursor.fetchall(),columns=mycursor.column_names)
-        st.write(df)
         st.write("Names of all the videos and their corresponding channels")
+        st.write(df)
             
     elif question == '2. Which channels have the most number of videos, and how many videos do they have?':
         mycursor.execute("""SELECT channel_name AS Channel_Name, total_videos AS Total_Videos
                             FROM channel
                             ORDER BY total_videos DESC""")
         df = pd.DataFrame(mycursor.fetchall(),columns=mycursor.column_names)
-        st.write(df)
         st.write("Number of videos in each channel")
+        st.write(df)
         
     elif question == '3. What are the top 10 most viewed videos and their respective channels?':
         mycursor.execute("""SELECT channel_name AS Channel_Name, video_name AS Video_Title, view_count AS Views 
@@ -283,8 +289,8 @@ elif option=='Data Analysis':
                             ORDER BY views DESC
                             LIMIT 10""")
         df = pd.DataFrame(mycursor.fetchall(),columns=mycursor.column_names)
-        st.write(df)
         st.write("Top 10 most viewed videos")
+        st.write(df)
         
     elif question == '4. How many comments were made on each video, and what are their corresponding video names?':
         mycursor.execute("""SELECT a.video_id AS Video_id, a.video_name AS Video_Title, a.Comment_count
@@ -294,8 +300,8 @@ elif option=='Data Analysis':
                             ON a.video_id = b.video_id
                             ORDER BY b.Total_Comments DESC""")
         df = pd.DataFrame(mycursor.fetchall(),columns=mycursor.column_names)
-        st.write(df)
         st.write("Comments on video")
+        st.write(df)
         
     elif question == '5. Which videos have the highest number of likes, and what are their corresponding channel names?':
         mycursor.execute("""SELECT channel_name AS Channel_Name,video_name AS Title,like_count AS Likes_Count 
@@ -303,24 +309,24 @@ elif option=='Data Analysis':
                             ORDER BY like_count DESC
                             LIMIT 10""")
         df = pd.DataFrame(mycursor.fetchall(),columns=mycursor.column_names)
-        st.write(df)
         st.write("Highest liked videos from channel ")
+        st.write(df)
         
     elif question == '6. What is the total number of likes and dislikes for each video, and what are their corresponding video names?':
         mycursor.execute("""SELECT video_name AS Title, like_count AS Likes_Count
                             FROM video
                             ORDER BY like_count DESC""")
         df = pd.DataFrame(mycursor.fetchall(),columns=mycursor.column_names)
+        st.write("Likes and dislikes of video")    
         st.write(df)
-        st.write("Likes and dislikes of video")
         
     elif question == '7. What is the total number of views for each channel, and what are their corresponding channel names?':
         mycursor.execute("""SELECT channel_name AS Channel_Name, channel_views AS Views
                             FROM channel
-                            ORDER BY view_count DESC""")
+                            ORDER BY channel_views DESC""")
         df = pd.DataFrame(mycursor.fetchall(),columns=mycursor.column_names)
-        st.write(df)
         st.write("Channels vs Views")
+        st.write(df)
     
     elif question == '8. What are the names of all the channels that have published videos in the year 2022?':
         mycursor.execute("""SELECT channel_name AS Channel_Name 
@@ -329,8 +335,8 @@ elif option=='Data Analysis':
                             GROUP BY channel_name
                             ORDER BY channel_name""")
         df = pd.DataFrame(mycursor.fetchall(),columns=mycursor.column_names)
-        st.write(df)
         st.write("Videos published in 2022")
+        st.write(df)
         
     elif question == '9. What is the average duration of all videos in each channel, and what are their corresponding channel names?':
         mycursor.execute("""SELECT channel_name AS Channel_Name,
@@ -339,8 +345,8 @@ elif option=='Data Analysis':
                             GROUP BY channel_name
                             ORDER BY AVG(duration)/60 DESC""")
         df = pd.DataFrame(mycursor.fetchall(),columns=mycursor.column_names)
-        st.write(df)
         st.write("Avg video duration for channels")
+        st.write(df)
         
     elif question == '10. Which videos have the highest number of comments, and what are their corresponding channel names?':
         mycursor.execute("""SELECT channel_name AS Channel_Name,video_id AS Video_ID,comment_count AS Comments
@@ -348,8 +354,9 @@ elif option=='Data Analysis':
                             ORDER BY comment_count DESC
                             LIMIT 10""")
         df = pd.DataFrame(mycursor.fetchall(),columns=mycursor.column_names)
-        st.write(df)
         st.write("Videos with most comments")
+        st.write(df)
 
+#exit
 elif option=='Exit':
      st.write("Thank you")
